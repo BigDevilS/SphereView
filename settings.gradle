@@ -1,2 +1,2 @@
-include ':app', ':sphereview'
+include ':sample', ':sphereview'
 rootProject.name='SphereView'
