@@ -23,13 +23,29 @@ class SphereView @JvmOverloads constructor(
         const val GOLDEN_RATIO = 0.6180339887498949
     }
 
-    var minScale: Float
+    var minScale = 0f
+        set(value) {
+            field = value
+            configChange()
+        }
 
-    var maxScale: Float
+    var maxScale = 0f
+        set(value) {
+            field = value
+            configChange()
+        }
 
-    var minAlpha: Float
+    var minAlpha = 0f
+        set(value) {
+            field = value
+            configChange()
+        }
 
-    var maxElevation: Int
+    var maxElevation = 0
+        set(value) {
+            field = value
+            configChange()
+        }
 
     var loopSpeed = 0
 
@@ -318,7 +334,7 @@ class SphereView @JvmOverloads constructor(
     }
 
     private fun z2Alpha(z: Double) =
-        minAlpha + (maxScale - minAlpha) * (z + mRadius) / (2 * mRadius)
+        minAlpha + (1f - minAlpha) * (z + mRadius) / (2 * mRadius)
 
     private fun z2Scale(z: Double) =
         minScale + (maxScale - minScale) * (z + mRadius) / (2 * mRadius)
@@ -326,6 +342,10 @@ class SphereView @JvmOverloads constructor(
     private fun z2Elevation(z: Double) = maxElevation * (z + mRadius) / (2 * mRadius)
 
     private fun offset2Radian(offset: Int) = PI * offset / (2 * mRadius)
+
+    private fun configChange() {
+        if (!mIsLooping) requestLayout()
+    }
 
     private fun dp2px(dp: Float): Int {
         val scale = context.resources.displayMetrics.density
