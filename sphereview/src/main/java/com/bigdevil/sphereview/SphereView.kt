@@ -344,7 +344,11 @@ class SphereView @JvmOverloads constructor(
     private fun offset2Radian(offset: Int) = PI * offset / (2 * mRadius)
 
     private fun configChange() {
-        if (!mIsLooping) requestLayout()
+        if (!mIsLooping) {
+            mOffsetX = 0
+            mOffsetY = 0
+            requestLayout()
+        }
     }
 
     private fun dp2px(dp: Float): Int {
