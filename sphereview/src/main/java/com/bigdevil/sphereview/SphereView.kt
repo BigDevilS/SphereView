@@ -23,17 +23,17 @@ class SphereView @JvmOverloads constructor(
         const val GOLDEN_RATIO = 0.6180339887498949
     }
 
-    var mMinScale: Float
+    var minScale: Float
 
-    var mMaxScale: Float
+    var maxScale: Float
 
-    var mMinAlpha: Float
+    var minAlpha: Float
 
-    var mMaxElevation: Int
+    var maxElevation: Int
 
-    var mLoopSpeed = 0
+    var loopSpeed = 0
 
-    var mLoopAngle = 0
+    var loopAngle = 0
         set(value) {
             field = value
             mLoopRadian = field * PI / 180
@@ -70,8 +70,8 @@ class SphereView @JvmOverloads constructor(
     private val mLoopRunnable by lazy {
         object : Runnable {
             override fun run() {
-                mOffsetX = (mLoopSpeed * cos(mLoopRadian)).toInt()
-                mOffsetY = (mLoopSpeed * sin(mLoopRadian)).toInt()
+                mOffsetX = (loopSpeed * cos(mLoopRadian)).toInt()
+                mOffsetY = (loopSpeed * sin(mLoopRadian)).toInt()
                 relayout()
                 post(this)
             }
@@ -110,12 +110,12 @@ class SphereView @JvmOverloads constructor(
 
     init {
         val a = context.obtainStyledAttributes(attrs, R.styleable.SphereView, defStyleAttr, 0)
-        mMinScale = a.getFloat(R.styleable.SphereView_min_scale, .3f)
-        mMaxScale = a.getFloat(R.styleable.SphereView_max_scale, 1f)
-        mMinAlpha = a.getFloat(R.styleable.SphereView_min_alpha, .3f)
-        mMaxElevation = a.getDimensionPixelSize(R.styleable.SphereView_max_elevation, dp2px(10f))
-        mLoopSpeed = a.getDimensionPixelSize(R.styleable.SphereView_loop_speed, 2)
-        mLoopAngle = a.getInt(R.styleable.SphereView_loop_angle, 45)
+        minScale = a.getFloat(R.styleable.SphereView_min_scale, .3f)
+        maxScale = a.getFloat(R.styleable.SphereView_max_scale, 1f)
+        minAlpha = a.getFloat(R.styleable.SphereView_min_alpha, .3f)
+        maxElevation = a.getDimensionPixelSize(R.styleable.SphereView_max_elevation, dp2px(10f))
+        loopSpeed = a.getDimensionPixelSize(R.styleable.SphereView_loop_speed, 2)
+        loopAngle = a.getInt(R.styleable.SphereView_loop_angle, 45)
         a.recycle()
     }
 
@@ -318,12 +318,12 @@ class SphereView @JvmOverloads constructor(
     }
 
     private fun z2Alpha(z: Double) =
-        mMinAlpha + (mMaxScale - mMinAlpha) * (z + mRadius) / (2 * mRadius)
+        minAlpha + (maxScale - minAlpha) * (z + mRadius) / (2 * mRadius)
 
     private fun z2Scale(z: Double) =
-        mMinScale + (mMaxScale - mMinScale) * (z + mRadius) / (2 * mRadius)
+        minScale + (maxScale - minScale) * (z + mRadius) / (2 * mRadius)
 
-    private fun z2Elevation(z: Double) = mMaxElevation * (z + mRadius) / (2 * mRadius)
+    private fun z2Elevation(z: Double) = maxElevation * (z + mRadius) / (2 * mRadius)
 
     private fun offset2Radian(offset: Int) = PI * offset / (2 * mRadius)
 
