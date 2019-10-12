@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="SphereView">
+        <attr name="min_scale" format="float" />
+        <attr name="max_scale" format="float" />
+        <attr name="min_alpha" format="float" />
+        <attr name="max_elevation" format="dimension" />
+        <attr name="loop_speed" format="dimension" />
+        <attr name="loop_angle" format="integer" />
+    </declare-styleable>
+</resources>

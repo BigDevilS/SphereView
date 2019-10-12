@@ -1,0 +1,2 @@
+include ':app', ':sphereview'
+rootProject.name='SphereView'
