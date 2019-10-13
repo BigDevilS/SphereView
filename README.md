@@ -37,3 +37,11 @@ setMinAlpha(float)|设置最低透明度比例
 setMaxElevation(float)|设置z轴最大高度
 setLoopSpeed(int)|设置自动旋转速度
 setLoopAngle(int)|设置自动旋转角度
+
+## Demo
+[demo.apk](https://github.com/BigDevilS/SphereView/raw/master/previews/demo.apk)
+
+## Previews
+![image](https://github.com/BigDevilS/SphereView/blob/master/previews/1.gif)
+![image](https://github.com/BigDevilS/SphereView/blob/master/previews/2.gif)
+![image](https://github.com/BigDevilS/SphereView/blob/master/previews/3.gif)
