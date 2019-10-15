@@ -12,7 +12,7 @@ allprojects {
 
 dependencies {
     ......
-    implementation 'com.github.BigDevilS:SphereView:v1.0.2'
+    implementation 'com.github.BigDevilS:SphereView:v1.0.3'
 }
 ```
 
