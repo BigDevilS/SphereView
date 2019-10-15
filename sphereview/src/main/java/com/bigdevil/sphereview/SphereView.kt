@@ -77,8 +77,6 @@ class SphereView @JvmOverloads constructor(
 
     private var mChildCountChange = false
 
-    private var mIsFirstLayout = true
-
     private val mTouchSlop by lazy { ViewConfiguration.get(context).scaledTouchSlop }
 
     private val mCenter by lazy { Point() }
@@ -168,8 +166,8 @@ class SphereView @JvmOverloads constructor(
     private fun measureHeight(heightMeasureSpec: Int): Int {
         val heightMode = MeasureSpec.getMode(heightMeasureSpec)
 
-        if (heightMode == MeasureSpec.EXACTLY) {
-            return MeasureSpec.getSize(heightMeasureSpec)
+        return if (heightMode == MeasureSpec.EXACTLY) {
+            MeasureSpec.getSize(heightMeasureSpec)
         } else {
             var maxHeight = 0
             var minHeight = Int.MAX_VALUE
@@ -181,45 +179,38 @@ class SphereView @JvmOverloads constructor(
                     minHeight = child.measuredHeight
                 }
             }
-            return (maxHeight + minHeight) / 2 * 5
+            (maxHeight + minHeight) / 2 * 5
         }
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
-        if (mIsFirstLayout || mChildCountChange) {
-            for (i in 0 until childCount) {
-                val coordinate = this[i].getTag(R.id.tag_item_coordinate) as Coordinate3D
-                val oldCoordinate = this[i].getTag(R.id.tag_item_old_coordinate) as Coordinate3D
+        for (i in 0 until childCount) {
+            val coordinate = this[i].getTag(R.id.tag_item_coordinate) as Coordinate3D
+            val oldCoordinate = this[i].getTag(R.id.tag_item_old_coordinate) as Coordinate3D
 
-                val z = mRadius * ((2 * i + 1.0) / childCount - 1)
-                val x = sqrt(mRadius * mRadius - z * z) * cos(2 * PI * (i + 1) * GOLDEN_RATIO)
-                val y = sqrt(mRadius * mRadius - z * z) * sin(2 * PI * (i + 1) * GOLDEN_RATIO)
+            val z = mRadius * ((2 * i + 1.0) / childCount - 1)
+            val x = sqrt(mRadius * mRadius - z * z) * cos(2 * PI * (i + 1) * GOLDEN_RATIO)
+            val y = sqrt(mRadius * mRadius - z * z) * sin(2 * PI * (i + 1) * GOLDEN_RATIO)
 
-                oldCoordinate.x = coordinate.x
-                oldCoordinate.y = coordinate.y
-                oldCoordinate.z = coordinate.z
+            oldCoordinate.x = coordinate.x
+            oldCoordinate.y = coordinate.y
+            oldCoordinate.z = coordinate.z
 
-                coordinate.x = x
-                coordinate.y = y
-                coordinate.z = z
+            coordinate.x = x
+            coordinate.y = y
+            coordinate.z = z
 
-                if (!mIsFirstLayout) {
-                    updateCoordinate(coordinate, mXozTotalOffsetRadian, mYozTotalOffsetRadian)
-                } else {
-                    layoutChild(this[i], coordinate)
-                }
-            }
-
-            if (!mIsFirstLayout) {
-                stop()
-                mChangeAnimator.start()
-                mChildCountChange = false
+            if (mChildCountChange) {
+                updateCoordinate(coordinate, mXozTotalOffsetRadian, mYozTotalOffsetRadian)
             } else {
-                mIsFirstLayout = false
-                mChildCountChange = false
+                layoutChild(this[i], coordinate)
             }
-        } else {
-            relayout()
+        }
+
+        if (mChildCountChange) {
+            stop()
+            mChangeAnimator.start()
+            mChildCountChange = false
         }
     }
 
@@ -232,7 +223,7 @@ class SphereView @JvmOverloads constructor(
         while (mXozTotalOffsetRadian > PI) mXozTotalOffsetRadian -= 2 * PI
         while (mXozTotalOffsetRadian < -PI) mXozTotalOffsetRadian += 2 * PI
         while (mYozTotalOffsetRadian > PI) mYozTotalOffsetRadian -= 2 * PI
-        while (mYozTotalOffsetRadian < PI) mYozTotalOffsetRadian += 2 * PI
+        while (mYozTotalOffsetRadian < -PI) mYozTotalOffsetRadian += 2 * PI
 
         for (child in children) {
             val coordinate = child.getTag(R.id.tag_item_coordinate) as Coordinate3D
@@ -304,7 +295,7 @@ class SphereView @JvmOverloads constructor(
                 mLastX = x
                 mLastY = y
                 mLoopRadian = atan2(mOffsetY.toDouble(), mOffsetX.toDouble())
-                requestLayout()
+                relayout()
             }
             MotionEvent.ACTION_UP,
             MotionEvent.ACTION_CANCEL -> {
