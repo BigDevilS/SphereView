@@ -1,5 +1,5 @@
 # SphereView
-模拟球面的ViewGroup
+相关博客：[SphereView-模拟球面的ViewGroup实现](https://juejin.im/post/5da5376e6fb9a04e065d7555)
 
 添加依赖：
 ```gradle
