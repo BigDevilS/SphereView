@@ -38,7 +38,7 @@ class MainActivity : AppCompatActivity() {
         remove.setOnClickListener { sphereView.removeViewAt(sphereView.childCount - 1) }
         loopSpeed.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-                sphereView.loopSpeed = progress
+                sphereView.loopSpeed = progress.toFloat()
             }
             override fun onStartTrackingTouch(p0: SeekBar?) {}
             override fun onStopTrackingTouch(p0: SeekBar?) {}
