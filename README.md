@@ -12,7 +12,7 @@ allprojects {
 
 dependencies {
     ......
-    implementation 'com.github.BigDevilS:SphereView:v1.0.3'
+    implementation 'com.github.BigDevilS:SphereView:v1.0.4'
 }
 ```
 
@@ -23,7 +23,7 @@ min_scale|float|0.3f|最小缩放比例
 max_scale|float|1f|最大缩放比例
 min_alpha|float|0.3f|最低透明度比例
 max_elevation|dimension|10dp|z轴最大高度
-loop_speed|dimension|2dp|自动旋转速度
+loop_speed|float|1f|自动旋转速度
 loop_angle|int|45|自动旋转角度
 ## APIs
 
@@ -35,7 +35,7 @@ setMinScale(float)|设置最小缩放比例
 setMaxScale(float)|设置最大缩放比例
 setMinAlpha(float)|设置最低透明度比例
 setMaxElevation(float)|设置z轴最大高度
-setLoopSpeed(int)|设置自动旋转速度
+setLoopSpeed(float)|设置自动旋转速度
 setLoopAngle(int)|设置自动旋转角度
 
 ## Demo
