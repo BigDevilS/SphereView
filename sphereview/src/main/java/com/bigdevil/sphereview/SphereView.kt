@@ -47,7 +47,7 @@ class SphereView @JvmOverloads constructor(
             configChange()
         }
 
-    var loopSpeed = 0
+    var loopSpeed = 0f
 
     var loopAngle = 0
         set(value) {
@@ -63,13 +63,13 @@ class SphereView @JvmOverloads constructor(
 
     private var mRadius = 0
 
-    private var mLastX = 0
+    private var mLastX = 0f
 
-    private var mLastY = 0
+    private var mLastY = 0f
 
-    private var mOffsetX = 0
+    private var mOffsetX = 0f
 
-    private var mOffsetY = 0
+    private var mOffsetY = 0f
 
     private var mXozTotalOffsetRadian = 0.0
 
@@ -84,8 +84,8 @@ class SphereView @JvmOverloads constructor(
     private val mLoopRunnable by lazy {
         object : Runnable {
             override fun run() {
-                mOffsetX = (loopSpeed * cos(mLoopRadian)).toInt()
-                mOffsetY = (loopSpeed * sin(mLoopRadian)).toInt()
+                mOffsetX = (loopSpeed * cos(mLoopRadian)).toFloat()
+                mOffsetY = (loopSpeed * sin(mLoopRadian)).toFloat()
                 relayout()
                 post(this)
             }
@@ -128,9 +128,20 @@ class SphereView @JvmOverloads constructor(
         maxScale = a.getFloat(R.styleable.SphereView_max_scale, 1f)
         minAlpha = a.getFloat(R.styleable.SphereView_min_alpha, .3f)
         maxElevation = a.getDimensionPixelSize(R.styleable.SphereView_max_elevation, dp2px(10f))
-        loopSpeed = a.getDimensionPixelSize(R.styleable.SphereView_loop_speed, 2)
+        loopSpeed = a.getFloat(R.styleable.SphereView_loop_speed, 1f)
         loopAngle = a.getInt(R.styleable.SphereView_loop_angle, 45)
         a.recycle()
+    }
+
+
+    fun startLoop() {
+        mNeedLoop = true
+        start()
+    }
+
+    fun stopLoop() {
+        mNeedLoop = false
+        stop()
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -260,8 +271,8 @@ class SphereView @JvmOverloads constructor(
     }
 
     override fun onInterceptTouchEvent(event: MotionEvent): Boolean {
-        val x = event.x.toInt()
-        val y = event.y.toInt()
+        val x = event.x
+        val y = event.y
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
                 stop()
@@ -286,12 +297,12 @@ class SphereView @JvmOverloads constructor(
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        val x = event.x.toInt()
-        val y = event.y.toInt()
+        val x = event.x
+        val y = event.y
         when (event.action) {
             MotionEvent.ACTION_MOVE -> {
-                mOffsetX = x - mLastX
-                mOffsetY = y - mLastY
+                mOffsetX = (x - mLastX) / 2
+                mOffsetY = (y - mLastY) / 2
                 mLastX = x
                 mLastY = y
                 mLoopRadian = atan2(mOffsetY.toDouble(), mOffsetX.toDouble())
@@ -332,12 +343,12 @@ class SphereView @JvmOverloads constructor(
 
     private fun z2Elevation(z: Double) = maxElevation * (z + mRadius) / (2 * mRadius)
 
-    private fun offset2Radian(offset: Int) = PI * offset / (2 * mRadius)
+    private fun offset2Radian(offset: Float) = PI * offset / (2 * mRadius)
 
     private fun configChange() {
         if (!mIsLooping) {
-            mOffsetX = 0
-            mOffsetY = 0
+            mOffsetX = 0f
+            mOffsetY = 0f
             requestLayout()
         }
     }
@@ -359,15 +370,5 @@ class SphereView @JvmOverloads constructor(
             handler.removeCallbacks(mLoopRunnable)
             mIsLooping = false
         }
-    }
-
-    fun startLoop() {
-        mNeedLoop = true
-        start()
-    }
-
-    fun stopLoop() {
-        mNeedLoop = false
-        stop()
     }
 }
