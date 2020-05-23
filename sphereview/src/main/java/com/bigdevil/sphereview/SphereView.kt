@@ -3,16 +3,17 @@ package com.bigdevil.sphereview
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.res.Resources
 import android.graphics.Point
 import android.os.Build
 import android.util.AttributeSet
+import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.ViewGroup
 import androidx.core.animation.doOnEnd
 import androidx.core.view.children
-import androidx.core.view.get
 import kotlin.math.*
 
 class SphereView @JvmOverloads constructor(
@@ -20,7 +21,7 @@ class SphereView @JvmOverloads constructor(
 ) : ViewGroup(context, attrs, defStyleAttr) {
 
     companion object {
-        const val GOLDEN_RATIO = 0.6180339887498949
+        private const val GOLDEN_RATIO = 0.6180339887498949
     }
 
     var minScale = 0f
@@ -77,7 +78,7 @@ class SphereView @JvmOverloads constructor(
 
     private var mChildCountChange = false
 
-    private val mTouchSlop by lazy { ViewConfiguration.get(context).scaledTouchSlop }
+    private val mTouchSlop = ViewConfiguration.get(context).scaledTouchSlop
 
     private val mCenter by lazy { Point() }
 
@@ -86,8 +87,8 @@ class SphereView @JvmOverloads constructor(
             override fun run() {
                 mOffsetX = (loopSpeed * cos(mLoopRadian)).toFloat()
                 mOffsetY = (loopSpeed * sin(mLoopRadian)).toFloat()
-                relayout()
-                post(this)
+                applyTranslate()
+                postDelayed(this, 10)
             }
         }
     }
@@ -95,24 +96,24 @@ class SphereView @JvmOverloads constructor(
     private val mTempCoordinate by lazy { Coordinate3D() }
 
     private val mChangeAnimator by lazy {
-        val animator = ValueAnimator.ofFloat(0f, 1f).setDuration(500)
-        animator.addUpdateListener {
-            for (i in 0 until childCount) {
-                val coordinate = this[i].getTag(R.id.tag_item_coordinate) as Coordinate3D
-                val oldCoordinate = this[i].getTag(R.id.tag_item_old_coordinate) as Coordinate3D
+        ValueAnimator.ofFloat(0f, 1f).setDuration(500).apply {
+            addUpdateListener {
+                for (child in children) {
+                    val coordinate = child.getTag(R.id.tag_item_coordinate) as Coordinate3D
+                    val oldCoordinate = child.getTag(R.id.tag_item_old_coordinate) as Coordinate3D
 
-                val dx = coordinate.x - oldCoordinate.x
-                val dy = coordinate.y - oldCoordinate.y
-                val dz = coordinate.z - oldCoordinate.z
+                    val dx = coordinate.x - oldCoordinate.x
+                    val dy = coordinate.y - oldCoordinate.y
+                    val dz = coordinate.z - oldCoordinate.z
 
-                mTempCoordinate.x = oldCoordinate.x + dx * it.animatedFraction
-                mTempCoordinate.y = oldCoordinate.y + dy * it.animatedFraction
-                mTempCoordinate.z = oldCoordinate.z + dz * it.animatedFraction
-                layoutChild(this[i], mTempCoordinate)
+                    mTempCoordinate.x = oldCoordinate.x + dx * it.animatedFraction
+                    mTempCoordinate.y = oldCoordinate.y + dy * it.animatedFraction
+                    mTempCoordinate.z = oldCoordinate.z + dz * it.animatedFraction
+                    translateChild(child, mTempCoordinate)
+                }
             }
+            doOnEnd { if (mNeedLoop) this@SphereView.start() }
         }
-        animator.doOnEnd { if (mNeedLoop) start() }
-        animator
     }
 
 
@@ -127,7 +128,7 @@ class SphereView @JvmOverloads constructor(
         minScale = a.getFloat(R.styleable.SphereView_min_scale, .3f)
         maxScale = a.getFloat(R.styleable.SphereView_max_scale, 1f)
         minAlpha = a.getFloat(R.styleable.SphereView_min_alpha, .3f)
-        maxElevation = a.getDimensionPixelSize(R.styleable.SphereView_max_elevation, dp2px(10f))
+        maxElevation = a.getDimensionPixelSize(R.styleable.SphereView_max_elevation, 10f.dp.toInt())
         loopSpeed = a.getFloat(R.styleable.SphereView_loop_speed, 1f)
         loopAngle = a.getInt(R.styleable.SphereView_loop_angle, 45)
         a.recycle()
@@ -195,13 +196,20 @@ class SphereView @JvmOverloads constructor(
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
-        for (i in 0 until childCount) {
-            val coordinate = this[i].getTag(R.id.tag_item_coordinate) as Coordinate3D
-            val oldCoordinate = this[i].getTag(R.id.tag_item_old_coordinate) as Coordinate3D
+        for ((index, child) in children.withIndex()) {
+            child.layout(
+                mCenter.x - child.measuredWidth / 2,
+                mCenter.y - child.measuredHeight / 2,
+                mCenter.x + child.measuredWidth / 2,
+                mCenter.y + child.measuredHeight / 2
+            )
 
-            val z = mRadius * ((2 * i + 1.0) / childCount - 1)
-            val x = sqrt(mRadius * mRadius - z * z) * cos(2 * PI * (i + 1) * GOLDEN_RATIO)
-            val y = sqrt(mRadius * mRadius - z * z) * sin(2 * PI * (i + 1) * GOLDEN_RATIO)
+            val coordinate = child.getTag(R.id.tag_item_coordinate) as Coordinate3D
+            val oldCoordinate = child.getTag(R.id.tag_item_old_coordinate) as Coordinate3D
+
+            val z = mRadius * ((2 * index + 1.0) / childCount - 1)
+            val x = sqrt(mRadius * mRadius - z * z) * cos(2 * PI * (index + 1) * GOLDEN_RATIO)
+            val y = sqrt(mRadius * mRadius - z * z) * sin(2 * PI * (index + 1) * GOLDEN_RATIO)
 
             oldCoordinate.x = coordinate.x
             oldCoordinate.y = coordinate.y
@@ -214,7 +222,7 @@ class SphereView @JvmOverloads constructor(
             if (mChildCountChange) {
                 updateCoordinate(coordinate, mXozTotalOffsetRadian, mYozTotalOffsetRadian)
             } else {
-                layoutChild(this[i], coordinate)
+                translateChild(child, coordinate)
             }
         }
 
@@ -225,7 +233,7 @@ class SphereView @JvmOverloads constructor(
         }
     }
 
-    private fun relayout() {
+    private fun applyTranslate() {
         val xozOffsetRadian = -offset2Radian(mOffsetX)
         val yozOffsetRadian = -offset2Radian(mOffsetY)
 
@@ -239,11 +247,11 @@ class SphereView @JvmOverloads constructor(
         for (child in children) {
             val coordinate = child.getTag(R.id.tag_item_coordinate) as Coordinate3D
             updateCoordinate(coordinate, xozOffsetRadian, yozOffsetRadian)
-            layoutChild(child, coordinate)
+            translateChild(child, coordinate)
         }
     }
 
-    private fun layoutChild(child: View, coordinate: Coordinate3D) {
+    private fun translateChild(child: View, coordinate: Coordinate3D) {
         child.alpha = z2Alpha(coordinate.z).toFloat()
         val scale = z2Scale(coordinate.z).toFloat()
         child.scaleX = scale
@@ -252,12 +260,8 @@ class SphereView @JvmOverloads constructor(
             child.z = z2Elevation(coordinate.z).toFloat()
         }
 
-        child.layout(
-            coordinate.x.toInt() + mCenter.x - child.measuredWidth / 2,
-            coordinate.y.toInt() + mCenter.y - child.measuredHeight / 2,
-            coordinate.x.toInt() + mCenter.x + child.measuredWidth / 2,
-            coordinate.y.toInt() + mCenter.y + child.measuredHeight / 2
-        )
+        child.translationX = coordinate.x.toFloat()
+        child.translationY = coordinate.y.toFloat()
     }
 
     override fun onViewAdded(child: View?) {
@@ -306,7 +310,7 @@ class SphereView @JvmOverloads constructor(
                 mLastX = x
                 mLastY = y
                 mLoopRadian = atan2(mOffsetY.toDouble(), mOffsetX.toDouble())
-                relayout()
+                applyTranslate()
             }
             MotionEvent.ACTION_UP,
             MotionEvent.ACTION_CANCEL -> {
@@ -353,11 +357,6 @@ class SphereView @JvmOverloads constructor(
         }
     }
 
-    private fun dp2px(dp: Float): Int {
-        val scale = context.resources.displayMetrics.density
-        return (dp * scale + 0.5f).toInt()
-    }
-
     private fun start() {
         if (!mIsLooping) {
             post(mLoopRunnable)
@@ -371,4 +370,11 @@ class SphereView @JvmOverloads constructor(
             mIsLooping = false
         }
     }
+
+    private val Float.dp: Float
+        get() = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP,
+            this,
+            Resources.getSystem().displayMetrics
+        )
 }

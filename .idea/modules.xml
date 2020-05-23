@@ -2,7 +2,10 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/Android Projects-SphereView.iml" filepath="$PROJECT_DIR$/Android Projects-SphereView.iml" group="SphereView" />
       <module fileurl="file://$PROJECT_DIR$/SphereView.iml" filepath="$PROJECT_DIR$/SphereView.iml" />
+      <module fileurl="file://$PROJECT_DIR$/sample/SphereView-sample.iml" filepath="$PROJECT_DIR$/sample/SphereView-sample.iml" group="SphereView/sample" />
+      <module fileurl="file://$PROJECT_DIR$/sphereview/SphereView-sphereview.iml" filepath="$PROJECT_DIR$/sphereview/SphereView-sphereview.iml" group="SphereView/sphereview" />
       <module fileurl="file://$PROJECT_DIR$/sample/sample.iml" filepath="$PROJECT_DIR$/sample/sample.iml" />
       <module fileurl="file://$PROJECT_DIR$/sphereview/sphereview.iml" filepath="$PROJECT_DIR$/sphereview/sphereview.iml" />
     </modules>
