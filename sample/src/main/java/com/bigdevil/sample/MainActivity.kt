@@ -16,7 +16,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         for (i in 0..8) {
             val view = LayoutInflater.from(this).inflate(R.layout.item_sphere_view, null)
-            val text = "测试数据$i"
+            val text = "$i"
             view.textView.text = text
             view.setOnClickListener {
                 Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
@@ -28,7 +28,7 @@ class MainActivity : AppCompatActivity() {
         stop.setOnClickListener { sphereView.stopLoop() }
         add.setOnClickListener {
             val view = LayoutInflater.from(this).inflate(R.layout.item_sphere_view, null)
-            val text = "测试数据${sphereView.childCount}"
+            val text = "${sphereView.childCount}"
             view.textView.text = text
             view.setOnClickListener {
                 Toast.makeText(this, text, Toast.LENGTH_SHORT).show()

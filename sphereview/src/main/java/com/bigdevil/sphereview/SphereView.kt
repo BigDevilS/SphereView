@@ -53,49 +53,47 @@ class SphereView @JvmOverloads constructor(
     var loopAngle = 0
         set(value) {
             field = value
-            mLoopRadian = field * PI / 180
+            loopRadian = field * PI / 180
         }
 
-    private var mLoopRadian = 0.0
+    private var loopRadian = 0.0
+    private var needLoop = false
+    private var isLooping = false
 
-    private var mNeedLoop = false
+    private var radius = 0
 
-    private var mIsLooping = false
+    private var lastX = 0f
+    private var lastY = 0f
+    private var offsetX = 0f
+    private var offsetY = 0f
 
-    private var mRadius = 0
+    private var xozTotalOffsetRadian = 0.0
+    private var yozTotalOffsetRadian = 0.0
 
-    private var mLastX = 0f
+    private var childCountChange = false
 
-    private var mLastY = 0f
+    private var skipLayout = false
 
-    private var mOffsetX = 0f
+    private var tracePointerId = 0
 
-    private var mOffsetY = 0f
+    private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop
 
-    private var mXozTotalOffsetRadian = 0.0
+    private val center by lazy { Point() }
 
-    private var mYozTotalOffsetRadian = 0.0
-
-    private var mChildCountChange = false
-
-    private val mTouchSlop = ViewConfiguration.get(context).scaledTouchSlop
-
-    private val mCenter by lazy { Point() }
-
-    private val mLoopRunnable by lazy {
+    private val loopRunnable by lazy {
         object : Runnable {
             override fun run() {
-                mOffsetX = (loopSpeed * cos(mLoopRadian)).toFloat()
-                mOffsetY = (loopSpeed * sin(mLoopRadian)).toFloat()
+                offsetX = (loopSpeed * cos(loopRadian)).toFloat()
+                offsetY = (loopSpeed * sin(loopRadian)).toFloat()
                 applyTranslate()
                 postDelayed(this, 10)
             }
         }
     }
 
-    private val mTempCoordinate by lazy { Coordinate3D() }
+    private val tempCoordinate by lazy { Coordinate3D() }
 
-    private val mChangeAnimator by lazy {
+    private val changeAnimator by lazy {
         ValueAnimator.ofFloat(0f, 1f).setDuration(500).apply {
             addUpdateListener {
                 for (child in children) {
@@ -106,13 +104,13 @@ class SphereView @JvmOverloads constructor(
                     val dy = coordinate.y - oldCoordinate.y
                     val dz = coordinate.z - oldCoordinate.z
 
-                    mTempCoordinate.x = oldCoordinate.x + dx * it.animatedFraction
-                    mTempCoordinate.y = oldCoordinate.y + dy * it.animatedFraction
-                    mTempCoordinate.z = oldCoordinate.z + dz * it.animatedFraction
-                    translateChild(child, mTempCoordinate)
+                    tempCoordinate.x = oldCoordinate.x + dx * it.animatedFraction
+                    tempCoordinate.y = oldCoordinate.y + dy * it.animatedFraction
+                    tempCoordinate.z = oldCoordinate.z + dz * it.animatedFraction
+                    translateChild(child, tempCoordinate)
                 }
             }
-            doOnEnd { if (mNeedLoop) this@SphereView.start() }
+            doOnEnd { if (needLoop) this@SphereView.start() }
         }
     }
 
@@ -136,12 +134,12 @@ class SphereView @JvmOverloads constructor(
 
 
     fun startLoop() {
-        mNeedLoop = true
+        needLoop = true
         start()
     }
 
     fun stopLoop() {
-        mNeedLoop = false
+        needLoop = false
         stop()
     }
 
@@ -149,9 +147,6 @@ class SphereView @JvmOverloads constructor(
         measureChildren(widthMeasureSpec, heightMeasureSpec)
         val width = measureWidth(widthMeasureSpec)
         val height = measureHeight(heightMeasureSpec)
-        mRadius = min(width, height) / 2
-        mCenter.x = width / 2
-        mCenter.y = height / 2
         setMeasuredDimension(width, height)
     }
 
@@ -177,7 +172,6 @@ class SphereView @JvmOverloads constructor(
 
     private fun measureHeight(heightMeasureSpec: Int): Int {
         val heightMode = MeasureSpec.getMode(heightMeasureSpec)
-
         return if (heightMode == MeasureSpec.EXACTLY) {
             MeasureSpec.getSize(heightMeasureSpec)
         } else {
@@ -196,20 +190,24 @@ class SphereView @JvmOverloads constructor(
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
+        if (skipLayout) {
+            return
+        }
+        skipLayout = true
         for ((index, child) in children.withIndex()) {
             child.layout(
-                mCenter.x - child.measuredWidth / 2,
-                mCenter.y - child.measuredHeight / 2,
-                mCenter.x + child.measuredWidth / 2,
-                mCenter.y + child.measuredHeight / 2
+                center.x - child.measuredWidth / 2,
+                center.y - child.measuredHeight / 2,
+                center.x + child.measuredWidth / 2,
+                center.y + child.measuredHeight / 2
             )
 
             val coordinate = child.getTag(R.id.tag_item_coordinate) as Coordinate3D
             val oldCoordinate = child.getTag(R.id.tag_item_old_coordinate) as Coordinate3D
 
-            val z = mRadius * ((2 * index + 1.0) / childCount - 1)
-            val x = sqrt(mRadius * mRadius - z * z) * cos(2 * PI * (index + 1) * GOLDEN_RATIO)
-            val y = sqrt(mRadius * mRadius - z * z) * sin(2 * PI * (index + 1) * GOLDEN_RATIO)
+            val z = radius * ((2 * index + 1.0) / childCount - 1)
+            val x = sqrt(radius * radius - z * z) * cos(2 * PI * (index + 1) * GOLDEN_RATIO)
+            val y = sqrt(radius * radius - z * z) * sin(2 * PI * (index + 1) * GOLDEN_RATIO)
 
             oldCoordinate.x = coordinate.x
             oldCoordinate.y = coordinate.y
@@ -219,30 +217,30 @@ class SphereView @JvmOverloads constructor(
             coordinate.y = y
             coordinate.z = z
 
-            if (mChildCountChange) {
-                updateCoordinate(coordinate, mXozTotalOffsetRadian, mYozTotalOffsetRadian)
+            if (childCountChange) {
+                updateCoordinate(coordinate, xozTotalOffsetRadian, yozTotalOffsetRadian)
             } else {
                 translateChild(child, coordinate)
             }
         }
 
-        if (mChildCountChange) {
+        if (childCountChange) {
             stop()
-            mChangeAnimator.start()
-            mChildCountChange = false
+            changeAnimator.start()
+            childCountChange = false
         }
     }
 
     private fun applyTranslate() {
-        val xozOffsetRadian = -offset2Radian(mOffsetX)
-        val yozOffsetRadian = -offset2Radian(mOffsetY)
+        val xozOffsetRadian = -offset2Radian(offsetX)
+        val yozOffsetRadian = -offset2Radian(offsetY)
 
-        mXozTotalOffsetRadian += xozOffsetRadian
-        mYozTotalOffsetRadian += yozOffsetRadian
-        while (mXozTotalOffsetRadian > PI) mXozTotalOffsetRadian -= 2 * PI
-        while (mXozTotalOffsetRadian < -PI) mXozTotalOffsetRadian += 2 * PI
-        while (mYozTotalOffsetRadian > PI) mYozTotalOffsetRadian -= 2 * PI
-        while (mYozTotalOffsetRadian < -PI) mYozTotalOffsetRadian += 2 * PI
+        xozTotalOffsetRadian += xozOffsetRadian
+        yozTotalOffsetRadian += yozOffsetRadian
+        while (xozTotalOffsetRadian > PI) xozTotalOffsetRadian -= 2 * PI
+        while (xozTotalOffsetRadian < -PI) xozTotalOffsetRadian += 2 * PI
+        while (yozTotalOffsetRadian > PI) yozTotalOffsetRadian -= 2 * PI
+        while (yozTotalOffsetRadian < -PI) yozTotalOffsetRadian += 2 * PI
 
         for (child in children) {
             val coordinate = child.getTag(R.id.tag_item_coordinate) as Coordinate3D
@@ -264,35 +262,44 @@ class SphereView @JvmOverloads constructor(
         child.translationY = coordinate.y.toFloat()
     }
 
-    override fun onViewAdded(child: View?) {
-        mChildCountChange = true
-        child?.setTag(R.id.tag_item_coordinate, Coordinate3D())
-        child?.setTag(R.id.tag_item_old_coordinate, Coordinate3D())
+    override fun onViewAdded(child: View) {
+        childCountChange = true
+        child.setTag(R.id.tag_item_coordinate, Coordinate3D())
+        child.setTag(R.id.tag_item_old_coordinate, Coordinate3D())
+        skipLayout = false
     }
 
-    override fun onViewRemoved(child: View?) {
-        mChildCountChange = true
+    override fun onViewRemoved(child: View) {
+        childCountChange = true
+        skipLayout = false
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        radius = min(width, height) / 2
+        center.x = width / 2
+        center.y = height / 2
+        skipLayout = false
     }
 
     override fun onInterceptTouchEvent(event: MotionEvent): Boolean {
         val x = event.x
         val y = event.y
-        when (event.action) {
+        when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 stop()
-                mLastX = x
-                mLastY = y
+                lastX = x
+                lastY = y
             }
             MotionEvent.ACTION_MOVE -> {
-                if (abs(x - mLastX) > mTouchSlop || abs(y - mLastY) > mTouchSlop) {
-                    mLastX = x
-                    mLastY = y
+                if (abs(x - lastX) > touchSlop || abs(y - lastY) > touchSlop) {
+                    lastX = x
+                    lastY = y
                     return true
                 }
             }
             MotionEvent.ACTION_UP,
             MotionEvent.ACTION_CANCEL -> {
-                if (mNeedLoop) start()
+                if (needLoop) start()
                 return false
             }
         }
@@ -301,20 +308,48 @@ class SphereView @JvmOverloads constructor(
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        val x = event.x
-        val y = event.y
-        when (event.action) {
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
+                stop()
+                val pointerIndex = event.actionIndex
+                if (pointerIndex != -1) {
+                    tracePointerId = event.getPointerId(pointerIndex)
+                    lastX = event.getX(pointerIndex)
+                    lastY = event.getY(pointerIndex)
+                }
+            }
             MotionEvent.ACTION_MOVE -> {
-                mOffsetX = (x - mLastX) / 2
-                mOffsetY = (y - mLastY) / 2
-                mLastX = x
-                mLastY = y
-                mLoopRadian = atan2(mOffsetY.toDouble(), mOffsetX.toDouble())
-                applyTranslate()
+                val pointerIndex = event.findPointerIndex(tracePointerId)
+                if (pointerIndex != -1) {
+                    val pointerX = event.getX(pointerIndex)
+                    val pointerY = event.getY(pointerIndex)
+                    offsetX = (pointerX - lastX) / 2
+                    offsetY = (pointerY - lastY) / 2
+                    lastX = pointerX
+                    lastY = pointerY
+                    loopRadian = atan2(offsetY.toDouble(), offsetX.toDouble())
+                    applyTranslate()
+                }
+            }
+            MotionEvent.ACTION_POINTER_UP -> {
+                val actionPointId = event.getPointerId(event.actionIndex)
+                if (actionPointId == tracePointerId) {
+                    val tracePointerIndex = if (event.actionIndex == event.pointerCount - 1) {
+                        event.pointerCount - 2
+                    } else {
+                        event.pointerCount - 1
+                    }
+                    if (tracePointerIndex != -1) {
+                        tracePointerId = event.getPointerId(tracePointerIndex)
+                        lastX = event.getX(tracePointerIndex)
+                        lastY = event.getY(tracePointerIndex)
+                    }
+                }
+
             }
             MotionEvent.ACTION_UP,
             MotionEvent.ACTION_CANCEL -> {
-                if (mNeedLoop) start()
+                if (needLoop) start()
                 return false
             }
         }
@@ -340,34 +375,34 @@ class SphereView @JvmOverloads constructor(
     }
 
     private fun z2Alpha(z: Double) =
-        minAlpha + (1f - minAlpha) * (z + mRadius) / (2 * mRadius)
+        minAlpha + (1f - minAlpha) * (z + radius) / (2 * radius)
 
     private fun z2Scale(z: Double) =
-        minScale + (maxScale - minScale) * (z + mRadius) / (2 * mRadius)
+        minScale + (maxScale - minScale) * (z + radius) / (2 * radius)
 
-    private fun z2Elevation(z: Double) = maxElevation * (z + mRadius) / (2 * mRadius)
+    private fun z2Elevation(z: Double) = maxElevation * (z + radius) / (2 * radius)
 
-    private fun offset2Radian(offset: Float) = PI * offset / (2 * mRadius)
+    private fun offset2Radian(offset: Float) = PI * offset / (2 * radius)
 
     private fun configChange() {
-        if (!mIsLooping) {
-            mOffsetX = 0f
-            mOffsetY = 0f
+        if (!isLooping) {
+            offsetX = 0f
+            offsetY = 0f
             requestLayout()
         }
     }
 
     private fun start() {
-        if (!mIsLooping) {
-            post(mLoopRunnable)
-            mIsLooping = true
+        if (!isLooping) {
+            post(loopRunnable)
+            isLooping = true
         }
     }
 
     private fun stop() {
-        if (mIsLooping) {
-            handler.removeCallbacks(mLoopRunnable)
-            mIsLooping = false
+        if (isLooping) {
+            handler.removeCallbacks(loopRunnable)
+            isLooping = false
         }
     }
 
