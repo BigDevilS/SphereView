@@ -8,11 +8,10 @@ import android.graphics.Point
 import android.os.Build
 import android.util.AttributeSet
 import android.util.TypedValue
-import android.view.MotionEvent
-import android.view.View
-import android.view.ViewConfiguration
-import android.view.ViewGroup
+import android.view.*
+import android.widget.OverScroller
 import androidx.core.animation.doOnEnd
+import androidx.core.view.ViewCompat
 import androidx.core.view.children
 import kotlin.math.*
 
@@ -66,6 +65,10 @@ class SphereView @JvmOverloads constructor(
     private var lastY = 0f
     private var offsetX = 0f
     private var offsetY = 0f
+    private var flingLastX = 0f
+    private var flingLastY = 0f
+    private var flingTotalOffsetX = 0f
+    private var flingTotalOffsetY = 0f
 
     private var xozTotalOffsetRadian = 0.0
     private var yozTotalOffsetRadian = 0.0
@@ -78,7 +81,12 @@ class SphereView @JvmOverloads constructor(
 
     private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop
 
-    private val center by lazy { Point() }
+    private val center = Point()
+
+    private val tempCoordinate = Coordinate3D()
+
+    private var velocityTracker: VelocityTracker? = null
+    private val overScroller = OverScroller(context)
 
     private val loopRunnable by lazy {
         object : Runnable {
@@ -86,12 +94,42 @@ class SphereView @JvmOverloads constructor(
                 offsetX = (loopSpeed * cos(loopRadian)).toFloat()
                 offsetY = (loopSpeed * sin(loopRadian)).toFloat()
                 applyTranslate()
-                postDelayed(this, 10)
+                ViewCompat.postOnAnimation(this@SphereView, this)
             }
         }
     }
 
-    private val tempCoordinate by lazy { Coordinate3D() }
+    private val flingRunnable = object : Runnable {
+        override fun run() {
+            if (overScroller.computeScrollOffset()) {
+                // overScroller.currX, overScroller.currY是Int, 最终计算出的角度会有偏差, 所以使用这种方式
+                val currX: Float
+                val currY: Float
+                if (abs(overScroller.currX) > abs(overScroller.currY)) {
+                    currX = overScroller.currX.toFloat()
+                    currY = (currX * tan(loopRadian)).toFloat()
+                } else {
+                    currY = overScroller.currY.toFloat()
+                    currX = (currY / tan(loopRadian)).toFloat()
+                }
+                offsetX = currX - flingLastX
+                offsetY = currY - flingLastY
+                flingLastX = currX
+                flingLastY = currY
+                val minOffsetX = if (needLoop) abs(loopSpeed * cos(loopRadian)).toFloat() else 0f
+                val minOffsetY = if (needLoop) abs(loopSpeed * sin(loopRadian)).toFloat() else 0f
+                if (abs(offsetX) <= minOffsetX && abs(offsetY) <= minOffsetY) {
+                    overScroller.abortAnimation()
+                    if (needLoop) start()
+                    return
+                }
+                applyTranslate()
+                ViewCompat.postOnAnimation(this@SphereView, this)
+            } else {
+                if (needLoop) start()
+            }
+        }
+    }
 
     private val changeAnimator by lazy {
         ValueAnimator.ofFloat(0f, 1f).setDuration(500).apply {
@@ -115,7 +153,7 @@ class SphereView @JvmOverloads constructor(
     }
 
 
-    data class Coordinate3D(
+    private data class Coordinate3D(
         var x: Double = 0.0,
         var y: Double = 0.0,
         var z: Double = 0.0
@@ -282,13 +320,20 @@ class SphereView @JvmOverloads constructor(
     }
 
     override fun onInterceptTouchEvent(event: MotionEvent): Boolean {
+        parent.requestDisallowInterceptTouchEvent(true)
         val x = event.x
         val y = event.y
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 stop()
-                lastX = x
-                lastY = y
+                resetFlingState()
+                velocityTracker = VelocityTracker.obtain()
+                val pointerIndex = event.actionIndex
+                if (pointerIndex != -1) {
+                    tracePointerId = event.getPointerId(pointerIndex)
+                    lastX = event.getX(pointerIndex)
+                    lastY = event.getY(pointerIndex)
+                }
             }
             MotionEvent.ACTION_MOVE -> {
                 if (abs(x - lastX) > touchSlop || abs(y - lastY) > touchSlop) {
@@ -310,7 +355,6 @@ class SphereView @JvmOverloads constructor(
     override fun onTouchEvent(event: MotionEvent): Boolean {
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
-                stop()
                 val pointerIndex = event.actionIndex
                 if (pointerIndex != -1) {
                     tracePointerId = event.getPointerId(pointerIndex)
@@ -330,6 +374,9 @@ class SphereView @JvmOverloads constructor(
                     loopRadian = atan2(offsetY.toDouble(), offsetX.toDouble())
                     applyTranslate()
                 }
+                if (event.pointerCount == 1) {
+                    velocityTracker?.addMovement(event)
+                }
             }
             MotionEvent.ACTION_POINTER_UP -> {
                 val actionPointId = event.getPointerId(event.actionIndex)
@@ -347,13 +394,37 @@ class SphereView @JvmOverloads constructor(
                 }
 
             }
-            MotionEvent.ACTION_UP,
+            MotionEvent.ACTION_UP -> {
+                if (velocityTracker != null) {
+                    velocityTracker!!.let {
+                        it.computeCurrentVelocity(300)
+                        overScroller.fling(
+                            0,
+                            0,
+                            it.xVelocity.toInt(),
+                            it.yVelocity.toInt(),
+                            Int.MIN_VALUE,
+                            Int.MAX_VALUE,
+                            Int.MIN_VALUE,
+                            Int.MAX_VALUE
+                        )
+                    }
+                    ViewCompat.postOnAnimation(this, flingRunnable)
+                } else {
+                    if (needLoop) start()
+                }
+            }
             MotionEvent.ACTION_CANCEL -> {
                 if (needLoop) start()
                 return false
             }
         }
         return true
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        releaseVelocityTracker()
     }
 
     private fun updateCoordinate(
@@ -384,25 +455,41 @@ class SphereView @JvmOverloads constructor(
 
     private fun offset2Radian(offset: Float) = PI * offset / (2 * radius)
 
+    private fun resetFlingState() {
+        removeCallbacks(flingRunnable)
+        overScroller.abortAnimation()
+        flingLastX = 0f
+        flingLastY = 0f
+        flingTotalOffsetX = 0f
+        flingTotalOffsetY = 0f
+        releaseVelocityTracker()
+    }
+
+    private fun releaseVelocityTracker() {
+        velocityTracker?.recycle()
+        velocityTracker = null
+    }
+
     private fun configChange() {
         if (!isLooping) {
-            offsetX = 0f
-            offsetY = 0f
-            requestLayout()
+            for (child in children) {
+                val coordinate = child.getTag(R.id.tag_item_coordinate) as Coordinate3D
+                translateChild(child, coordinate)
+            }
         }
     }
 
     private fun start() {
         if (!isLooping) {
-            post(loopRunnable)
             isLooping = true
+            ViewCompat.postOnAnimation(this, loopRunnable)
         }
     }
 
     private fun stop() {
         if (isLooping) {
-            handler.removeCallbacks(loopRunnable)
             isLooping = false
+            removeCallbacks(loopRunnable)
         }
     }
 
