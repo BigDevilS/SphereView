@@ -8,8 +8,8 @@
         android:id="@+id/sphereView"
         android:layout_width="0dp"
         android:layout_height="400dp"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <Button
@@ -17,8 +17,8 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="开始"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toLeftOf="@id/stop"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/stop"
         app:layout_constraintTop_toBottomOf="@id/sphereView" />
 
     <Button
@@ -26,8 +26,8 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="暂停"
-        app:layout_constraintLeft_toRightOf="@id/start"
-        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toEndOf="@id/start"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/sphereView" />
 
     <Button
@@ -35,8 +35,8 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="添加"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toLeftOf="@+id/remove"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/remove"
         app:layout_constraintTop_toBottomOf="@id/start" />
 
     <Button
@@ -44,8 +44,8 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="移除"
-        app:layout_constraintLeft_toRightOf="@id/add"
-        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toEndOf="@id/add"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/stop" />
 
     <TextView
@@ -53,7 +53,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="loopSpeed"
-        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/add" />
 
     <TextView
@@ -62,7 +62,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:text="minScale"
-        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/loopSpeedText" />
 
     <TextView
@@ -71,7 +71,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:text="maxScale"
-        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/minScaleText" />
 
     <TextView
@@ -80,7 +80,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:text="minAlpha"
-        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/maxScaleText" />
 
     <TextView
@@ -89,7 +89,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:text="maxElevation"
-        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/minAlphaText" />
 
     <androidx.constraintlayout.widget.Barrier
@@ -105,8 +105,8 @@
         android:layout_height="wrap_content"
         android:max="20"
         app:layout_constraintBottom_toBottomOf="@id/loopSpeedText"
-        app:layout_constraintLeft_toRightOf="@id/textBarrier"
-        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toEndOf="@id/textBarrier"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/loopSpeedText" />
 
     <SeekBar
@@ -114,8 +114,8 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="@+id/minScaleText"
-        app:layout_constraintLeft_toRightOf="@id/textBarrier"
-        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toEndOf="@id/textBarrier"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/minScaleText" />
 
     <SeekBar
@@ -123,8 +123,8 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="@+id/maxScaleText"
-        app:layout_constraintLeft_toRightOf="@id/textBarrier"
-        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toEndOf="@id/textBarrier"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/maxScaleText" />
 
     <SeekBar
@@ -132,8 +132,8 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="@+id/minAlphaText"
-        app:layout_constraintLeft_toRightOf="@id/textBarrier"
-        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toEndOf="@id/textBarrier"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/minAlphaText" />
 
     <SeekBar
@@ -141,8 +141,8 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="@+id/maxElevationText"
-        app:layout_constraintLeft_toRightOf="@id/textBarrier"
-        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toEndOf="@id/textBarrier"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/maxElevationText" />
 
 

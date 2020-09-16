@@ -1,10 +1,10 @@
 package com.bigdevil.sample
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.widget.SeekBar
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import com.bigdevil.sphereview.sample.R
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.item_sphere_view.view.*
@@ -35,7 +35,9 @@ class MainActivity : AppCompatActivity() {
             }
             sphereView.addView(view)
         }
-        remove.setOnClickListener { sphereView.removeViewAt(sphereView.childCount - 1) }
+        remove.setOnClickListener {
+            if (sphereView.childCount > 0) sphereView.removeViewAt(sphereView.childCount - 1)
+        }
         loopSpeed.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
                 sphereView.loopSpeed = progress.toFloat()
