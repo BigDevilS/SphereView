@@ -12,7 +12,7 @@ allprojects {
 
 dependencies {
     ......
-    implementation 'com.github.BigDevilS:SphereView:v1.0.5'
+    implementation 'com.github.BigDevilS:SphereView:v1.2.0'
 }
 ```
 
@@ -25,6 +25,7 @@ min_alpha|float|0.3f|最低透明度比例
 max_elevation|dimension|10dp|z轴最大高度
 loop_speed|float|1f|自动旋转速度
 loop_angle|int|45|自动旋转角度
+enable_animation|boolean|true|是否使用动画将子View偏移到初始位置
 ## APIs
 
 Method|Description
@@ -37,6 +38,7 @@ setMinAlpha(float)|设置最低透明度比例
 setMaxElevation(float)|设置z轴最大高度
 setLoopSpeed(float)|设置自动旋转速度
 setLoopAngle(int)|设置自动旋转角度
+setEnableAnimation|是否使用动画将子View偏移到初始位置
 
 ## Demo
 [demo.apk](https://github.com/BigDevilS/SphereView/raw/master/previews/demo.apk)
