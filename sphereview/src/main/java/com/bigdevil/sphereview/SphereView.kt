@@ -47,6 +47,8 @@ class SphereView @JvmOverloads constructor(
             configChange()
         }
 
+    var enableAnimation = true
+
     var loopSpeed = 0f
 
     var loopAngle = 0
@@ -72,8 +74,6 @@ class SphereView @JvmOverloads constructor(
 
     private var xozTotalOffsetRadian = 0.0
     private var yozTotalOffsetRadian = 0.0
-
-    private var childCountChange = false
 
     private var skipLayout = false
 
@@ -105,12 +105,19 @@ class SphereView @JvmOverloads constructor(
                 // overScroller.currX, overScroller.currY是Int, 最终计算出的角度会有偏差, 所以使用这种方式
                 val currX: Float
                 val currY: Float
-                if (abs(overScroller.currX) > abs(overScroller.currY)) {
-                    currX = overScroller.currX.toFloat()
-                    currY = (currX * tan(loopRadian)).toFloat()
-                } else {
-                    currY = overScroller.currY.toFloat()
-                    currX = (currY / tan(loopRadian)).toFloat()
+                when {
+                    overScroller.currX == 0 && overScroller.currY == 0 -> {
+                        currX = 0f
+                        currY = 0f
+                    }
+                    abs(overScroller.currX) > abs(overScroller.currY) -> {
+                        currX = overScroller.currX.toFloat()
+                        currY = (currX * tan(loopRadian)).toFloat()
+                    }
+                    else -> {
+                        currY = overScroller.currY.toFloat()
+                        currX = (currY / tan(loopRadian)).toFloat()
+                    }
                 }
                 offsetX = currX - flingLastX
                 offsetY = currY - flingLastY
@@ -167,6 +174,7 @@ class SphereView @JvmOverloads constructor(
         maxElevation = a.getDimensionPixelSize(R.styleable.SphereView_max_elevation, 10f.dp.toInt())
         loopSpeed = a.getFloat(R.styleable.SphereView_loop_speed, 1f)
         loopAngle = a.getInt(R.styleable.SphereView_loop_angle, 45)
+        enableAnimation = a.getBoolean(R.styleable.SphereView_enable_animation, true)
         a.recycle()
     }
 
@@ -255,17 +263,16 @@ class SphereView @JvmOverloads constructor(
             coordinate.y = y
             coordinate.z = z
 
-            if (childCountChange) {
+            if (enableAnimation) {
                 updateCoordinate(coordinate, xozTotalOffsetRadian, yozTotalOffsetRadian)
             } else {
                 translateChild(child, coordinate)
             }
         }
 
-        if (childCountChange) {
+        if (enableAnimation) {
             stop()
             changeAnimator.start()
-            childCountChange = false
         }
     }
 
@@ -301,14 +308,12 @@ class SphereView @JvmOverloads constructor(
     }
 
     override fun onViewAdded(child: View) {
-        childCountChange = true
         child.setTag(R.id.tag_item_coordinate, Coordinate3D())
         child.setTag(R.id.tag_item_old_coordinate, Coordinate3D())
         skipLayout = false
     }
 
     override fun onViewRemoved(child: View) {
-        childCountChange = true
         skipLayout = false
     }
 

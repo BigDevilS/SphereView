@@ -7,5 +7,6 @@
         <attr name="max_elevation" format="dimension" />
         <attr name="loop_speed" format="float" />
         <attr name="loop_angle" format="integer" />
+        <attr name="enable_animation" format="boolean" />
     </declare-styleable>
 </resources>
