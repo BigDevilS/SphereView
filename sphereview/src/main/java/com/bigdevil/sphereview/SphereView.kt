@@ -502,6 +502,6 @@ class SphereView @JvmOverloads constructor(
         get() = TypedValue.applyDimension(
             TypedValue.COMPLEX_UNIT_DIP,
             this,
-            Resources.getSystem().displayMetrics
+            context.resources.displayMetrics
         )
 }
