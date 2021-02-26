@@ -3,7 +3,6 @@ package com.bigdevil.sphereview
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.res.Resources
 import android.graphics.Point
 import android.os.Build
 import android.util.AttributeSet
@@ -198,9 +197,9 @@ class SphereView @JvmOverloads constructor(
 
     private fun measureWidth(widthMeasureSpec: Int): Int {
         val widthMode = MeasureSpec.getMode(widthMeasureSpec)
-
-        if (widthMode == MeasureSpec.EXACTLY) {
-            return MeasureSpec.getSize(widthMeasureSpec)
+        val widthSize = MeasureSpec.getSize(widthMeasureSpec)
+        return if (widthMode == MeasureSpec.EXACTLY) {
+            widthSize
         } else {
             var maxWidth = 0
             var minWidth = Int.MAX_VALUE
@@ -212,14 +211,20 @@ class SphereView @JvmOverloads constructor(
                     minWidth = child.measuredWidth
                 }
             }
-            return (maxWidth + minWidth) / 2 * 3
+            val exceptSize = (maxWidth + minWidth) / 2 * 3
+            if (widthMode == MeasureSpec.AT_MOST) {
+                min(widthSize, exceptSize)
+            } else {
+                exceptSize
+            }
         }
     }
 
     private fun measureHeight(heightMeasureSpec: Int): Int {
         val heightMode = MeasureSpec.getMode(heightMeasureSpec)
+        val heightSize = MeasureSpec.getSize(heightMeasureSpec)
         return if (heightMode == MeasureSpec.EXACTLY) {
-            MeasureSpec.getSize(heightMeasureSpec)
+            heightSize
         } else {
             var maxHeight = 0
             var minHeight = Int.MAX_VALUE
@@ -231,7 +236,12 @@ class SphereView @JvmOverloads constructor(
                     minHeight = child.measuredHeight
                 }
             }
-            (maxHeight + minHeight) / 2 * 5
+            val exceptSize = (maxHeight + minHeight) / 2 * 5
+            if (heightMode == MeasureSpec.AT_MOST) {
+                min(heightSize, exceptSize)
+            } else {
+                exceptSize
+            }
         }
     }
 
